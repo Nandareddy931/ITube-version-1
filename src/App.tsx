@@ -12,6 +12,8 @@ import Channel from "./pages/Channel";
 import Search from "./pages/Search";
 import Subscriptions from "./pages/Subscriptions";
 import Movies from "./pages/Movies";
+import { Settings } from "./pages/Settings";
+import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +34,8 @@ const App = () => (
             <Route path="/search" element={<Search />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/movies" element={<Movies />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/account" element={<Account />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

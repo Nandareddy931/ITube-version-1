@@ -14,7 +14,7 @@ const loginSchema = z.object({
 });
 
 const signupSchema = loginSchema.extend({
-  username: z.string().min(1, 'Username is required').max(50, 'Username too long'),
+  username: z.string().min(1, 'Channel name is required').max(50, 'Channel name too long'),
 });
 
 export default function Auth() {
@@ -22,6 +22,7 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
@@ -71,6 +72,16 @@ export default function Auth() {
           navigate('/');
         }
       } else {
+        if (!agreedToTerms) {
+          toast({
+            title: 'Agreement required',
+            description: 'You must agree to the Terms and Conditions to create an account.',
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+
         const { error } = await signUp(email, password, username);
         if (error) {
           let message = error.message;
@@ -126,17 +137,19 @@ export default function Auth() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">Channel name</Label>
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Choose a username"
+                  placeholder="Your channel name"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required={!isLogin}
                 />
               </div>
             )}
+
+            
             
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -173,6 +186,21 @@ export default function Auth() {
                 </Button>
               </div>
             </div>
+
+            {!isLogin && (
+              <div className="flex items-start gap-2 mt-2">
+                <input
+                  id="terms"
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+                <label htmlFor="terms" className="text-sm text-muted-foreground">
+                  I agree to the <Link to="/terms" className="text-primary hover:underline">Terms &amp; Conditions</Link>
+                </label>
+              </div>
+            )}
 
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {loading ? 'Please wait...' : isLogin ? 'Sign In' : 'Create Account'}

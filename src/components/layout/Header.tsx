@@ -1,24 +1,13 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Menu, Upload, User, LogOut, X } from 'lucide-react';
+import { Search, Menu, Upload, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from '@/components/ui/sheet';
 import { SearchSuggestions } from '@/components/search/SearchSuggestions';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { AccountSettingsMenu } from '@/components/AccountSettingsMenu';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -145,31 +134,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
               </Button>
             </Link>
             <NotificationBell />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="" />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                      {user.email?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-card border-border">
-                <DropdownMenuItem asChild>
-                  <Link to={`/channel/${user.id}`} className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Your Channel
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut} className="text-destructive">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <AccountSettingsMenu />
           </>
         ) : (
           <Link to="/auth">

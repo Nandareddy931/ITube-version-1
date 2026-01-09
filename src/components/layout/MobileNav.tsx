@@ -8,7 +8,7 @@ const navItems = [
   { icon: Film, label: 'Movies', href: '/movies' },
   { icon: Upload, label: 'Upload', href: '/upload', requiresAuth: true },
   { icon: Users, label: 'Subscriptions', href: '/subscriptions' },
-  { icon: User, label: 'Account', href: '/auth' },
+  { icon: User, label: 'Account', href: '/account', requiresAuth: true },
 ];
 
 export function MobileNav() {
@@ -21,18 +21,15 @@ export function MobileNav() {
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
           
-          // Show different icon/link for account based on auth state
-          const href = item.label === 'Account' && user ? '/channel' : item.href;
-          
-          // Skip upload for non-auth users (they'll be redirected anyway)
-          if (item.requiresAuth && !user && item.label !== 'Upload') {
+          // Skip items that require auth if user is not authenticated
+          if (item.requiresAuth && !user) {
             return null;
           }
 
           return (
             <Link
               key={item.href}
-              to={href}
+              to={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-[60px] transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"
