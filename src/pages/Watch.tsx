@@ -930,33 +930,50 @@ export default function Watch() {
               </div>
             </div>
 
-            {/* Suggested Videos - Below Main Content */}
-            <div className="mt-6 sm:mt-8 lg:hidden">
-              <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Suggested Videos</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            {/* Suggested Videos - YouTube Style */}
+            <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border">
+              <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 px-0">Suggested Videos</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                 {relatedVideos.map((suggestedVideo) => (
                   <Link
                     key={suggestedVideo.id}
                     to={`/watch/${suggestedVideo.id}`}
-                    className="flex gap-3 group"
+                    className="group flex flex-col overflow-hidden rounded-xl hover:bg-accent/50 transition-colors duration-200 cursor-pointer"
                   >
-                    <div className="relative w-40 shrink-0 aspect-video rounded-lg overflow-hidden bg-secondary">
+                    {/* Thumbnail Container */}
+                    <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-secondary flex-shrink-0">
                       <img
                         src={suggestedVideo.thumbnail_url || '/placeholder.svg'}
                         alt={suggestedVideo.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                       />
+                      {/* Overlay on hover */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
-                        {suggestedVideo.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {suggestedVideo.profiles?.display_name || 'Unknown Channel'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatViews(suggestedVideo.views_count)} views
-                      </p>
+
+                    {/* Video Info */}
+                    <div className="flex gap-3 mt-3 px-0">
+                      {/* Channel Avatar */}
+                      <Avatar className="h-9 w-9 flex-shrink-0 mt-0.5">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                          {suggestedVideo.profiles?.display_name?.charAt(0).toUpperCase() || 'C'}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      {/* Title and Channel Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors duration-200 leading-tight">
+                          {suggestedVideo.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1 hover:text-foreground transition-colors">
+                          {suggestedVideo.profiles?.display_name || 'Unknown Channel'}
+                        </p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <span>{formatViews(suggestedVideo.views_count)} views</span>
+                          <span>•</span>
+                          <span>{formatDistanceToNow(new Date(suggestedVideo.created_at), { addSuffix: false })}</span>
+                        </p>
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -965,34 +982,7 @@ export default function Watch() {
           </div>
         </div>
 
-        {/* Related Videos */}
-        <div className="lg:w-96 px-3 sm:px-0 mt-4 lg:mt-0">
-          <h2 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Related Videos</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-3">
-            {relatedVideos.map((relVideo) => (
-              <Link key={relVideo.id} to={`/watch/${relVideo.id}`} className="flex flex-col lg:flex-row gap-2 group">
-                <div className="relative w-full lg:w-40 shrink-0 aspect-video rounded-lg overflow-hidden bg-secondary">
-                  <img
-                    src={relVideo.thumbnail_url || '/placeholder.svg'}
-                    alt={relVideo.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xs sm:text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
-                    {relVideo.title}
-                  </h3>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
-                    {relVideo.profiles?.display_name || 'Unknown'}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">
-                    {formatViews(relVideo.views_count)} views
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+
       </div>
     </Layout>
   );
