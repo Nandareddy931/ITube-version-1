@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { MobileNav } from './MobileNav';
+import { UploadQueue } from '@/components/UploadQueue';
 import { cn } from '@/lib/utils';
 
 interface LayoutProps {
@@ -24,6 +25,7 @@ export function Layout({ children }: LayoutProps) {
         {children}
       </main>
       <MobileNav />
+      <UploadQueue />
     </div>
   );
 }

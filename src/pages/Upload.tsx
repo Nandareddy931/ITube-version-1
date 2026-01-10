@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Upload as UploadIcon, Film, Image, X, Loader2, Sparkles } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { generateThumbnailFromVideo, getVideoThumbnailPreview } from '@/utils/thumbnailGenerator';
+import { uploadService } from '@/services/uploadService';
 
 const categories = [
   'Entertainment',
@@ -90,63 +91,8 @@ export default function Upload() {
       return;
     }
 
-    setUploading(true);
-    setUploadProgress(10);
-
     try {
-      const videoFileName = `${user.id}/${Date.now()}-${videoFile.name}`;
-      const { data: videoData, error: videoError } = await supabase.storage
-        .from('videos')
-        .upload(videoFileName, videoFile);
-
-      if (videoError) throw videoError;
-      setUploadProgress(50);
-
-      const { data: videoUrlData } = supabase.storage
-        .from('videos')
-        .getPublicUrl(videoFileName);
-
-      let thumbnailUrl = null;
-
-      // Priority 1: Use custom thumbnail if provided by user
-      if (thumbnailFile) {
-        const thumbnailFileName = `${user.id}/${Date.now()}-${thumbnailFile.name}`;
-        const { error: thumbError } = await supabase.storage
-          .from('thumbnails')
-          .upload(thumbnailFileName, thumbnailFile);
-
-        if (!thumbError) {
-          const { data: thumbUrlData } = supabase.storage
-            .from('thumbnails')
-            .getPublicUrl(thumbnailFileName);
-          thumbnailUrl = thumbUrlData.publicUrl;
-        }
-      }
-      // Priority 2: If no custom thumbnail, auto-generate from video on submit
-      else if (videoFile) {
-        try {
-          setGeneratingThumbnail(true);
-          const thumbnailBlob = await generateThumbnailFromVideo(videoFile, true);
-          const thumbnailFileName = `${user.id}/${Date.now()}-auto-thumbnail.jpg`;
-          const { error: thumbError } = await supabase.storage
-            .from('thumbnails')
-            .upload(thumbnailFileName, thumbnailBlob);
-
-          if (!thumbError) {
-            const { data: thumbUrlData } = supabase.storage
-              .from('thumbnails')
-              .getPublicUrl(thumbnailFileName);
-            thumbnailUrl = thumbUrlData.publicUrl;
-          }
-        } catch (thumbGenError) {
-          console.error("Failed to auto-generate thumbnail:", thumbGenError);
-          // Continue without thumbnail if generation fails
-        } finally {
-          setGeneratingThumbnail(false);
-        }
-      }
-      setUploadProgress(80);
-
+      // Get video duration
       let duration = 0;
       if (videoPreview) {
         const video = document.createElement('video');
@@ -159,28 +105,88 @@ export default function Upload() {
         });
       }
 
-      const { error: dbError } = await supabase
-        .from('videos')
-        .insert({
-          user_id: user.id,
+      // Create upload task
+      const uploadTask = uploadService.createUploadTask(
+        videoFile,
+        {
           title: title.trim(),
           description: description.trim(),
-          video_url: videoUrlData.publicUrl,
-          thumbnail_url: thumbnailUrl,
           category,
+          tags,
           duration,
-          tags: tags.length > 0 ? tags : null,
-        });
-
-      if (dbError) throw dbError;
-      setUploadProgress(100);
+        },
+        thumbnailFile || undefined
+      );
 
       toast({
-        title: "Video uploaded!",
-        description: "Your video is now live",
+        title: "Upload started",
+        description: "Your video is uploading in the background. You can continue browsing.",
       });
-      
-      navigate('/');
+
+      // Process the upload in background
+      const results = await uploadService.uploadTask(uploadTask, supabase);
+
+      if (results) {
+        // Get thumbnail URL
+        let thumbnailUrl = results.thumbnailUrl;
+
+        // Priority 1: Use custom thumbnail if provided by user
+        if (!thumbnailUrl && !thumbnailFile && videoFile) {
+          try {
+            setGeneratingThumbnail(true);
+            const thumbnailBlob = await generateThumbnailFromVideo(videoFile, true);
+            const thumbnailFileName = `${user.id}/${Date.now()}-auto-thumbnail.jpg`;
+            const { error: thumbError } = await supabase.storage
+              .from('thumbnails')
+              .upload(thumbnailFileName, thumbnailBlob);
+
+            if (!thumbError) {
+              const { data: thumbUrlData } = supabase.storage
+                .from('thumbnails')
+                .getPublicUrl(thumbnailFileName);
+              thumbnailUrl = thumbUrlData.publicUrl;
+            }
+          } catch (thumbGenError) {
+            console.error("Failed to auto-generate thumbnail:", thumbGenError);
+          } finally {
+            setGeneratingThumbnail(false);
+          }
+        }
+
+        // Insert into database
+        const { error: dbError } = await supabase
+          .from('videos')
+          .insert({
+            user_id: user.id,
+            title: title.trim(),
+            description: description.trim(),
+            video_url: results.videoUrl,
+            thumbnail_url: thumbnailUrl,
+            category,
+            duration,
+            tags: tags.length > 0 ? tags : null,
+          });
+
+        if (dbError) throw dbError;
+
+        toast({
+          title: "Video uploaded!",
+          description: "Your video is now live",
+        });
+
+        // Reset form
+        setVideoFile(null);
+        setThumbnailFile(null);
+        setVideoPreview(null);
+        setThumbnailPreview(null);
+        setTitle('');
+        setDescription('');
+        setTags([]);
+        setCategory('Entertainment');
+        setUploadProgress(0);
+
+        navigate('/');
+      }
     } catch (error: any) {
       console.error('Upload error:', error);
       toast({
@@ -188,8 +194,6 @@ export default function Upload() {
         description: error.message || "Please try again",
         variant: "destructive",
       });
-    } finally {
-      setUploading(false);
     }
   };
 
